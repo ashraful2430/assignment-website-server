@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -29,7 +29,21 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
-        const assignmentCollection = client.db('assignmentDB').collection('assignments')
+        const assignmentCollection = client.db('assignmentDB').collection('assignments');
+
+
+        app.get('/assignments', async (req, res) => {
+            const cursor = assignmentCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get('/assignments/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await assignmentCollection.findOne(query)
+            res.send(result)
+        })
 
         app.post('/assignments', async (req, res) => {
             const assignments = req.body;

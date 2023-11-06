@@ -55,7 +55,12 @@ async function run() {
         // submitted assignment
 
         app.get('/submitted', async (req, res) => {
-            const result = await submittedAssignmentCollection.find().toArray();
+            let query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email }
+            }
+
+            const result = await submittedAssignmentCollection.find(query).toArray();
             res.send(result)
         })
 

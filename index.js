@@ -30,7 +30,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
         const assignmentCollection = client.db('assignmentDB').collection('assignments');
-
+        const submittedAssignmentCollection = client.db('assignmentDB').collection('submitted')
 
         app.get('/assignments', async (req, res) => {
             const cursor = assignmentCollection.find();
@@ -52,6 +52,18 @@ async function run() {
 
         })
 
+        // submitted assignment
+
+        app.get('/submitted', async (req, res) => {
+            const result = await submittedAssignmentCollection.find().toArray();
+            res.send(result)
+        })
+
+        app.post('/submitted', async (req, res) => {
+            const submitted = req.body;
+            const result = await submittedAssignmentCollection.insertOne(submitted);
+            res.send(result)
+        })
 
 
 

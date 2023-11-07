@@ -33,10 +33,16 @@ async function run() {
         const submittedAssignmentCollection = client.db('assignmentDB').collection('submitted')
 
         app.get('/assignments', async (req, res) => {
-            const cursor = assignmentCollection.find();
+            let query = {};
+            if (req.query?.difficulty) {
+                query = { difficulty: req.query.difficulty }
+            }
+            const cursor = assignmentCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         })
+
+
 
         app.get('/assignments/:id', async (req, res) => {
             const id = req.params.id;
@@ -82,7 +88,10 @@ async function run() {
         app.get('/submitted', async (req, res) => {
             let query = {};
             if (req.query?.email) {
-                query = { email: req.query.email }
+                query = { email: req.query?.email }
+            }
+            if (req.query?.status) {
+                query = { status: req.query?.status }
             }
 
             const result = await submittedAssignmentCollection.find(query).toArray();
@@ -95,16 +104,19 @@ async function run() {
             res.send(result)
         })
 
-        app.patch('/submitted/:id', async (req, res) => {
+        app.put('/submitted/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const updateSubmit = req.body;
             console.log(updateSubmit);
             const updateDoc = {
                 $set: {
-                    status: updateSubmit.status
+                    status: updateSubmit.status,
+                    obtainMarks: updateSubmit.obtainMarks,
+                    feedBack: updateSubmit.feedBack
                 }
             }
+            console.log(updateDoc);
             const result = await submittedAssignmentCollection.updateOne(filter, updateDoc)
             res.send(result)
         });

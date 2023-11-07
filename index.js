@@ -108,7 +108,6 @@ async function run() {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const updateSubmit = req.body;
-            console.log(updateSubmit);
             const updateDoc = {
                 $set: {
                     status: updateSubmit.status,
@@ -116,7 +115,6 @@ async function run() {
                     feedBack: updateSubmit.feedBack
                 }
             }
-            console.log(updateDoc);
             const result = await submittedAssignmentCollection.updateOne(filter, updateDoc)
             res.send(result)
         });

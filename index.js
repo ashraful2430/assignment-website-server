@@ -43,6 +43,31 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const result = await assignmentCollection.findOne(query)
             res.send(result)
+        });
+        app.delete('/assignments/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await assignmentCollection.deleteOne(query);
+            res.send(result)
+        });
+        app.put('/assignments/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updatedAssignment = req.body
+            const update = {
+                $set: {
+                    title: updatedAssignment.title,
+                    difficulty: updatedAssignment.difficulty,
+                    marks: updatedAssignment.marks,
+                    thumbnail: updatedAssignment.thumbnail,
+                    description: updatedAssignment.description,
+                    date: updatedAssignment.date,
+
+                }
+            }
+            const result = await assignmentCollection.updateOne(filter, update, options);
+            res.send(result)
         })
 
         app.post('/assignments', async (req, res) => {
@@ -82,7 +107,9 @@ async function run() {
             }
             const result = await submittedAssignmentCollection.updateOne(filter, updateDoc)
             res.send(result)
-        })
+        });
+
+
 
         app.post('/submitted', async (req, res) => {
             const submitted = req.body;

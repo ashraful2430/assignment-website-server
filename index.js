@@ -15,6 +15,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 
 
@@ -32,6 +33,22 @@ const client = new MongoClient(uri, {
     }
 });
 
+const verifyToken = async (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log('token in middleware', token);
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+    jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'unauthorized access' })
+        }
+
+        req.user = decoded;
+        next();
+    })
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -43,7 +60,6 @@ async function run() {
         // auth related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '1h' });
             res
                 .cookie('token', token, {
@@ -54,6 +70,10 @@ async function run() {
                 .send({ success: true });
         });
 
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+        })
 
 
 
@@ -66,6 +86,11 @@ async function run() {
             const cursor = assignmentCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
+        })
+
+        app.get('/assignmentsCount', async (req, res) => {
+            const count = await assignmentCollection.estimatedDocumentCount();
+            res.send({ count })
         })
 
 
@@ -112,10 +137,10 @@ async function run() {
         // submitted assignment
 
         app.get('/submitted', async (req, res) => {
+
             let query = {};
-            if (req.query?.email) {
-                query = { email: req.query?.email }
-            }
+            console.log('cookies', req.cookies);
+
             if (req.query?.status) {
                 query = { status: req.query?.status }
             }
@@ -123,6 +148,21 @@ async function run() {
             const result = await submittedAssignmentCollection.find(query).toArray();
             res.send(result)
         })
+        app.get('/submitted/personal', verifyToken, async (req, res) => {
+            if (req.query.email !== req.user.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            let query = {};
+            console.log('cookies', req.cookies);
+            if (req.query?.email) {
+                query = { email: req.query?.email }
+            }
+
+            const result = await submittedAssignmentCollection.find(query).toArray();
+            res.send(result)
+        })
+
+
         app.get('/submitted/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -132,6 +172,7 @@ async function run() {
 
         app.put('/submitted/:id', async (req, res) => {
             const id = req.params.id
+
             const filter = { _id: new ObjectId(id) }
             const updateSubmit = req.body;
             const updateDoc = {

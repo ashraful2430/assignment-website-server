@@ -79,11 +79,13 @@ async function run() {
 
         // assignmet related api
         app.get('/assignments', async (req, res) => {
+            const page = parseInt(req.query.page)
+            const size = parseInt(req.query.size)
             let query = {};
             if (req.query?.difficulty) {
                 query = { difficulty: req.query.difficulty }
             }
-            const cursor = assignmentCollection.find(query);
+            const cursor = assignmentCollection.find(query).skip(page * size).limit(size);
             const result = await cursor.toArray();
             res.send(result);
         })
